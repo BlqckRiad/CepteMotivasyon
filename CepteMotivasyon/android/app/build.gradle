@@ -1,8 +1,0 @@
-android {
-    namespace "com.ceptemotivasyon.app"
-    defaultConfig {
-        applicationId "com.ceptemotivasyon.app"
-        // ... existing code ...
-    }
-    // ... existing code ...
-} 
