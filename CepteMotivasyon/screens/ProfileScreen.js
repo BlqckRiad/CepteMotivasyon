@@ -14,14 +14,17 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/ThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
+import StreakService from '../services/StreakService';
 
 const ProfileScreen = () => {
   const { user } = useAuth();
   const { colors } = useTheme();
   const [profileData, setProfileData] = useState({
     completed_tasks: 0,
-    achievement_points: 0
+    achievement_points: 0,
+    user_streak: 0
   });
+  const [taskStatus, setTaskStatus] = useState([]);
   const [orientation, setOrientation] = useState(
     Dimensions.get('window').width > Dimensions.get('window').height ? 'landscape' : 'portrait'
   );
@@ -31,7 +34,7 @@ const ProfileScreen = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('completed_tasks, achievement_points')
+        .select('completed_tasks, achievement_points, user_streak')
         .eq('id', user.id)
         .single();
 
@@ -45,9 +48,33 @@ const ProfileScreen = () => {
     }
   };
 
+  const updateStreakData = async () => {
+    try {
+      const { streak, statusData } = await StreakService.calculateStreak(user.id);
+      setTaskStatus(statusData);
+      
+      if (streak !== profileData.user_streak) {
+        setProfileData(prev => ({
+          ...prev,
+          user_streak: streak
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating streak:', error);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('tr-TR', { month: 'short' });
+    return `${day} ${month}`;
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       fetchProfileData();
+      updateStreakData();
     }, [])
   );
 
@@ -88,6 +115,44 @@ const ProfileScreen = () => {
       </View>
     </Modal>
   );
+
+  const renderStreakDays = () => {
+    const days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    
+    return (
+      <View style={[styles.streakContainer, { backgroundColor: colors.card }]}>
+        <View style={styles.streakHeader}>
+          <View style={styles.streakInfo}>
+            <MaterialCommunityIcons name="fire" size={24} color={colors.primary} />
+            <Text style={[styles.streakText, { color: colors.text }]}>
+              {profileData.user_streak} Gün Streak!
+            </Text>
+          </View>
+        </View>
+        <View style={styles.daysContainer}>
+          {taskStatus.map((status, index) => (
+            <View key={index} style={styles.dayItem}>
+              <View style={[
+                styles.dayIndicator,
+                {
+                  backgroundColor: 
+                    status.status === 2 ? '#4CAF50' :  // Yeşil - tüm görevler tamamlandı
+                    status.status === 1 ? '#FFC107' :  // Sarı - bazı görevler tamamlandı
+                    '#F44336'                          // Kırmızı - hiç görev tamamlanmadı
+                }
+              ]} />
+              <Text style={[styles.dayText, { color: colors.subtext }]}>
+                {days[new Date(status.date).getDay()]}
+              </Text>
+              <Text style={[styles.dateText, { color: colors.subtext }]}>
+                {formatDate(status.date)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -130,6 +195,8 @@ const ProfileScreen = () => {
               {user?.email}
             </Text>
           </View>
+
+          {renderStreakDays()}
 
           <View style={[styles.statsContainer, { backgroundColor: colors.card }]}>
             <TouchableOpacity
@@ -395,6 +462,59 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 24,
+  },
+  streakContainer: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  streakHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  streakInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  streakText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  daysContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 4,
+  },
+  dayItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  dayIndicator: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginBottom: 6,
+  },
+  dayText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  dateText: {
+    fontSize: 11,
+    opacity: 0.8,
   },
 });
 
