@@ -14,6 +14,8 @@ import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import AuthScreen from './screens/AuthScreen';
 import CustomHeader from './components/CustomHeader';
+import AboutScreen from './screens/AboutScreen';
+import HelpScreen from './screens/HelpScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -224,6 +226,22 @@ const MainNavigator = () => {
             backgroundColor: '#f5f5f5',
           },
           headerShadowVisible: false,
+        }}
+      />
+      <Stack.Screen 
+        name="About" 
+        component={AboutScreen}
+        options={{ 
+          title: 'Hakkında',
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
+        name="Help" 
+        component={HelpScreen}
+        options={{ 
+          title: 'Yardım',
+          animation: 'slide_from_right'
         }}
       />
     </Stack.Navigator>

@@ -280,7 +280,10 @@ const SettingsScreen = () => {
               { color: colors.text },
               orientation === 'landscape' && { fontSize: 20 }
             ]}>Diğer</Text>
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => navigation.navigate('Help')}
+            >
               <MaterialCommunityIcons
                 name="help-circle-outline"
                 size={orientation === 'landscape' ? 28 : 24}
@@ -297,7 +300,10 @@ const SettingsScreen = () => {
                 color={colors.subtext}
               />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => navigation.navigate('About')}
+            >
               <MaterialCommunityIcons
                 name="information-outline"
                 size={orientation === 'landscape' ? 28 : 24}

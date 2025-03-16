@@ -244,6 +244,7 @@ const ProfileScreen = () => {
             marginLeft: 10,
           }
         ]}>
+          {/* Başarılar Bölümü - Şimdilik Devre Dışı
           <View style={[styles.section, { backgroundColor: colors.card }]}>
             <Text style={[
               styles.sectionTitle,
@@ -289,6 +290,7 @@ const ProfileScreen = () => {
               </View>
             </View>
           </View>
+          */}
         </View>
       </View>
       <InfoModal />
