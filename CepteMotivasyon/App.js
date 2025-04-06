@@ -16,6 +16,10 @@ import AuthScreen from './screens/AuthScreen';
 import CustomHeader from './components/CustomHeader';
 import AboutScreen from './screens/AboutScreen';
 import HelpScreen from './screens/HelpScreen';
+import ChangePasswordScreen from './screens/ChangePasswordScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import BadgesScreen from './screens/BadgesScreen';
+import MarketScreen from './screens/MarketScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -203,47 +207,64 @@ const TabNavigator = () => {
           ),
         })}
       />
+      <Tab.Screen
+        name="Market"
+        component={user ? MarketScreen : AuthRequiredScreen}
+        options={({ navigation }) => ({
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon 
+              focused={focused} 
+              icon="store" 
+              label="Market" 
+              onPress={() => user ? navigation.navigate('Market') : navigation.navigate('Auth')}
+              disabled={!user}
+            />
+          ),
+        })}
+      />
     </Tab.Navigator>
   );
 };
 
-const MainNavigator = () => {
+const MainStack = () => {
+  const { user } = useAuth();
+  const { colors } = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false
+        headerShown: false,
       }}
     >
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
-      <Stack.Screen 
-        name="Auth" 
-        component={AuthScreen}
-        options={{
-          presentation: 'modal',
-          headerShown: true,
-          headerTitle: '',
-          headerStyle: {
-            backgroundColor: '#f5f5f5',
-          },
-          headerShadowVisible: false,
-        }}
+      <Stack.Screen name="Main" component={TabNavigator} />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="About" 
-        component={AboutScreen}
-        options={{ 
-          title: 'Hakkında',
-          animation: 'slide_from_right'
-        }}
+      <Stack.Screen
+        name="Badges"
+        component={BadgesScreen}
+        options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="Help" 
-        component={HelpScreen}
-        options={{ 
-          title: 'Yardım',
-          animation: 'slide_from_right'
-        }}
-      />
+      {user ? (
+        <>
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
+          <Stack.Screen name="Help" component={HelpScreen} />
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+          <Stack.Screen
+            name="Market"
+            component={MarketScreen}
+            options={{
+              headerShown: false
+            }}
+          />
+        </>
+      ) : (
+        <Stack.Screen name="Auth" component={AuthScreen} />
+      )}
     </Stack.Navigator>
   );
 };
@@ -254,7 +275,7 @@ export default function App() {
       <AuthProvider>
         <ThemeProvider>
           <NavigationContainer>
-            <MainNavigator />
+            <MainStack />
           </NavigationContainer>
         </ThemeProvider>
       </AuthProvider>

@@ -70,7 +70,7 @@ const AboutScreen = () => {
         </View>
 
         <Text style={[styles.copyright, { color: colors.subtext }]}>
-          © 2024 Cepte Motivasyon. Tüm hakları saklıdır.
+          © 2025 Cepte Motivasyon. Tüm hakları saklıdır.
         </Text>
       </View>
     </ScrollView>

@@ -219,7 +219,7 @@ const AuthScreen = () => {
             )}
 
             {isLogin && renderInput(
-              'E-posta veya Kullanıcı Adı',
+              'E-posta',
               formData.emailOrUsername,
               (text) => setFormData({ ...formData, emailOrUsername: text }),
               { icon: 'account' }

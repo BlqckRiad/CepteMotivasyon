@@ -7,11 +7,17 @@ import {
   ScrollView,
   Modal,
   Dimensions,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
+import { supabase } from '../lib/supabase';
 
 const SettingsScreen = () => {
   const { signOut } = useAuth();
@@ -23,6 +29,17 @@ const SettingsScreen = () => {
     Dimensions.get('window').width > Dimensions.get('window').height ? 'landscape' : 'portrait'
   );
 
+  // Tablet kontrolü
+  const isTablet = () => {
+    const { width, height } = Dimensions.get('window');
+    return Math.min(width, height) >= 768;
+  };
+
+  // Dinamik stil hesaplayıcılar
+  const getDynamicFontSize = (baseSize) => isTablet() ? baseSize * 1.3 : baseSize;
+  const getDynamicPadding = (basePadding) => isTablet() ? basePadding * 1.5 : basePadding;
+  const getIconSize = () => isTablet() ? (orientation === 'landscape' ? 32 : 28) : 24;
+
   useEffect(() => {
     const updateOrientation = () => {
       const { width, height } = Dimensions.get('window');
@@ -30,10 +47,7 @@ const SettingsScreen = () => {
     };
 
     const subscription = Dimensions.addEventListener('change', updateOrientation);
-
-    return () => {
-      subscription?.remove();
-    };
+    return () => subscription?.remove();
   }, []);
 
   const handleLogout = async () => {
@@ -49,6 +63,48 @@ const SettingsScreen = () => {
     }
   };
 
+  const handleProfileEdit = () => {
+    navigation.navigate('Profile');
+  };
+
+  const handlePasswordChange = () => {
+    navigation.navigate('ChangePassword');
+  };
+
+  const renderSettingItem = (icon, text, onPress = () => {}) => (
+    <TouchableOpacity 
+      style={[
+        styles.settingItem, 
+        { 
+          borderBottomColor: colors.border,
+          paddingVertical: getDynamicPadding(12)
+        }
+      ]}
+      onPress={onPress}
+    >
+      <MaterialCommunityIcons
+        name={icon}
+        size={getIconSize()}
+        color={colors.subtext}
+      />
+      <Text style={[
+        styles.settingText,
+        { 
+          color: colors.text,
+          fontSize: getDynamicFontSize(16),
+          marginLeft: getDynamicPadding(12)
+        }
+      ]}>
+        {text}
+      </Text>
+      <MaterialCommunityIcons
+        name="chevron-right"
+        size={getIconSize()}
+        color={colors.subtext}
+      />
+    </TouchableOpacity>
+  );
+
   const ThemeModal = () => (
     <Modal
       animationType="fade"
@@ -57,21 +113,60 @@ const SettingsScreen = () => {
       onRequestClose={() => setShowThemeModal(false)}
     >
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+        <View style={[
+          styles.modalContent,
+          { 
+            backgroundColor: colors.card,
+            width: orientation === 'landscape' ? (isTablet() ? '50%' : '70%') : (isTablet() ? '60%' : '85%'),
+            padding: getDynamicPadding(24)
+          }
+        ]}>
           <TouchableOpacity
             style={[styles.closeButton, { backgroundColor: colors.background }]}
             onPress={() => setShowThemeModal(false)}
           >
-            <MaterialCommunityIcons name="close" size={24} color={colors.text} />
+            <MaterialCommunityIcons 
+              name="close" 
+              size={getIconSize()} 
+              color={colors.text} 
+            />
           </TouchableOpacity>
-          <MaterialCommunityIcons name="theme-light-dark" size={48} color={colors.primary} />
-          <Text style={[styles.modalTitle, { color: colors.text }]}>Tema Seçin</Text>
-          <View style={styles.themeOptions}>
+          
+          <View style={[
+            styles.modalHeader,
+            orientation === 'landscape' && styles.landscapeModalHeader
+          ]}>
+            <MaterialCommunityIcons 
+              name="theme-light-dark" 
+              size={getDynamicFontSize(48)} 
+              color={colors.primary} 
+            />
+            
+            <Text style={[
+              styles.modalTitle, 
+              { 
+                color: colors.text,
+                fontSize: getDynamicFontSize(20),
+                marginLeft: orientation === 'landscape' ? getDynamicPadding(16) : 0
+              }
+            ]}>
+              Tema Seçin
+            </Text>
+          </View>
+          
+          <View style={[
+            styles.themeOptions,
+            orientation === 'landscape' && styles.landscapeThemeOptions
+          ]}>
             <TouchableOpacity
               style={[
                 styles.themeOption,
-                { backgroundColor: !isDarkMode ? colors.primary : colors.card },
-                { borderColor: colors.border }
+                { 
+                  backgroundColor: !isDarkMode ? colors.primary : colors.card,
+                  borderColor: colors.border,
+                  padding: getDynamicPadding(16),
+                  width: orientation === 'landscape' ? '48%' : '100%'
+                }
               ]}
               onPress={() => {
                 if (isDarkMode) toggleTheme();
@@ -80,12 +175,16 @@ const SettingsScreen = () => {
             >
               <MaterialCommunityIcons
                 name="white-balance-sunny"
-                size={24}
+                size={getIconSize()}
                 color={!isDarkMode ? '#fff' : colors.text}
               />
               <Text style={[
                 styles.themeOptionText,
-                { color: !isDarkMode ? '#fff' : colors.text }
+                { 
+                  color: !isDarkMode ? '#fff' : colors.text,
+                  fontSize: getDynamicFontSize(16),
+                  marginLeft: getDynamicPadding(8)
+                }
               ]}>
                 Açık Tema
               </Text>
@@ -94,8 +193,12 @@ const SettingsScreen = () => {
             <TouchableOpacity
               style={[
                 styles.themeOption,
-                { backgroundColor: isDarkMode ? colors.primary : colors.card },
-                { borderColor: colors.border }
+                { 
+                  backgroundColor: isDarkMode ? colors.primary : colors.card,
+                  borderColor: colors.border,
+                  padding: getDynamicPadding(16),
+                  width: orientation === 'landscape' ? '48%' : '100%'
+                }
               ]}
               onPress={() => {
                 if (!isDarkMode) toggleTheme();
@@ -104,12 +207,16 @@ const SettingsScreen = () => {
             >
               <MaterialCommunityIcons
                 name="moon-waning-crescent"
-                size={24}
+                size={getIconSize()}
                 color={isDarkMode ? '#fff' : colors.text}
               />
               <Text style={[
                 styles.themeOptionText,
-                { color: isDarkMode ? '#fff' : colors.text }
+                { 
+                  color: isDarkMode ? '#fff' : colors.text,
+                  fontSize: getDynamicFontSize(16),
+                  marginLeft: getDynamicPadding(8)
+                }
               ]}>
                 Koyu Tema
               </Text>
@@ -128,25 +235,72 @@ const SettingsScreen = () => {
       onRequestClose={() => setShowLogoutModal(false)}
     >
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <MaterialCommunityIcons name="logout-alert" size={48} color="#f44336" />
-          <Text style={[styles.modalTitle, { color: colors.text }]}>Çıkış Yap</Text>
-          <Text style={[styles.modalText, { color: colors.subtext }]}>
+        <View style={[
+          styles.modalContent,
+          { 
+            backgroundColor: colors.card,
+            width: isTablet() ? '50%' : '85%',
+            padding: getDynamicPadding(24)
+          }
+        ]}>
+          <MaterialCommunityIcons 
+            name="logout-alert" 
+            size={getDynamicFontSize(48)} 
+            color="#f44336" 
+          />
+          <Text style={[
+            styles.modalTitle,
+            { 
+              color: colors.text,
+              fontSize: getDynamicFontSize(20)
+            }
+          ]}>
+            Çıkış Yap
+          </Text>
+          <Text style={[
+            styles.modalText,
+            { 
+              color: colors.subtext,
+              fontSize: getDynamicFontSize(16)
+            }
+          ]}>
             Hesabınızdan çıkış yapmak istediğinize emin misiniz?
           </Text>
           <View style={styles.modalButtons}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={[
+                styles.modalButton,
+                styles.cancelButton,
+                { padding: getDynamicPadding(12) }
+              ]}
               onPress={() => setShowLogoutModal(false)}
             >
-              <Text style={styles.cancelButtonText}>Vazgeç</Text>
+              <Text style={[
+                styles.cancelButtonText,
+                { fontSize: getDynamicFontSize(16) }
+              ]}>
+                Vazgeç
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.modalButton, styles.logoutModalButton]}
+              style={[
+                styles.modalButton,
+                styles.logoutModalButton,
+                { padding: getDynamicPadding(12) }
+              ]}
               onPress={handleLogout}
             >
-              <MaterialCommunityIcons name="logout" size={20} color="#fff" />
-              <Text style={styles.logoutModalButtonText}>Çıkış Yap</Text>
+              <MaterialCommunityIcons 
+                name="logout" 
+                size={getIconSize()} 
+                color="#fff" 
+              />
+              <Text style={[
+                styles.logoutModalButtonText,
+                { fontSize: getDynamicFontSize(16) }
+              ]}>
+                Çıkış Yap
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -155,193 +309,120 @@ const SettingsScreen = () => {
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView 
+      style={[
+        styles.container, 
+        { backgroundColor: colors.background }
+      ]}
+    >
       <View style={[
         styles.contentContainer,
         orientation === 'landscape' && {
           flexDirection: 'row',
-          paddingHorizontal: '5%',
           flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          paddingHorizontal: '5%',
         }
       ]}>
+        {/* Uygulama Ayarları */}
         <View style={[
           styles.settingsSection,
           orientation === 'landscape' && {
-            flex: 0.48,
-            marginRight: '2%',
+            width: isTablet() ? '48%' : '100%',
           }
         ]}>
-          <View style={[styles.section, { backgroundColor: colors.card }]}>
+          <View style={[
+            styles.section,
+            { backgroundColor: colors.card }
+          ]}>
             <Text style={[
               styles.sectionTitle,
-              { color: colors.text },
-              orientation === 'landscape' && { fontSize: 20 }
-            ]}>Uygulama Ayarları</Text>
-            <TouchableOpacity style={styles.settingItem}>
-              <MaterialCommunityIcons
-                name="bell-outline"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-              <Text style={[
-                styles.settingText,
-                { color: colors.text },
-                orientation === 'landscape' && { fontSize: 18 }
-              ]}>Bildirim Ayarları</Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.settingItem}
-              onPress={() => setShowThemeModal(true)}
-            >
-              <MaterialCommunityIcons
-                name="theme-light-dark"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-              <Text style={[
-                styles.settingText,
-                { color: colors.text },
-                orientation === 'landscape' && { fontSize: 18 }
-              ]}>Tema Ayarları</Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-            </TouchableOpacity>
+              { 
+                color: colors.text,
+                fontSize: getDynamicFontSize(16)
+              }
+            ]}>
+              Uygulama Ayarları
+            </Text>
+            {renderSettingItem('bell-outline', 'Bildirim Ayarları')}
+            {renderSettingItem('theme-light-dark', 'Tema Ayarları', () => setShowThemeModal(true))}
           </View>
         </View>
 
+        {/* Hesap Ayarları */}
         <View style={[
           styles.settingsSection,
           orientation === 'landscape' && {
-            flex: 0.48,
-            marginLeft: '2%',
+            width: isTablet() ? '48%' : '100%',
           }
         ]}>
-          <View style={[styles.section, { backgroundColor: colors.card }]}>
+          <View style={[
+            styles.section,
+            { backgroundColor: colors.card }
+          ]}>
             <Text style={[
               styles.sectionTitle,
-              { color: colors.text },
-              orientation === 'landscape' && { fontSize: 20 }
-            ]}>Hesap</Text>
-            <TouchableOpacity style={styles.settingItem}>
-              <MaterialCommunityIcons
-                name="account-edit-outline"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-              <Text style={[
-                styles.settingText,
-                { color: colors.text },
-                orientation === 'landscape' && { fontSize: 18 }
-              ]}>Profil Düzenle</Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.settingItem}>
-              <MaterialCommunityIcons
-                name="lock-outline"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-              <Text style={[
-                styles.settingText,
-                { color: colors.text },
-                orientation === 'landscape' && { fontSize: 18 }
-              ]}>Şifre Değiştir</Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-            </TouchableOpacity>
+              { 
+                color: colors.text,
+                fontSize: getDynamicFontSize(16)
+              }
+            ]}>
+              Hesap
+            </Text>
+            {renderSettingItem('account-edit-outline', 'Profil Düzenle', handleProfileEdit)}
+            {renderSettingItem('lock-outline', 'Şifre Değiştir', handlePasswordChange)}
           </View>
         </View>
 
+        {/* Diğer Ayarlar */}
         <View style={[
           styles.settingsSection,
           orientation === 'landscape' && {
-            flex: 1,
-            marginTop: 16,
+            width: '100%',
+            marginTop: getDynamicPadding(16)
           }
         ]}>
-          <View style={[styles.section, { backgroundColor: colors.card }]}>
+          <View style={[
+            styles.section,
+            { backgroundColor: colors.card }
+          ]}>
             <Text style={[
               styles.sectionTitle,
-              { color: colors.text },
-              orientation === 'landscape' && { fontSize: 20 }
-            ]}>Diğer</Text>
-            <TouchableOpacity 
-              style={styles.settingItem}
-              onPress={() => navigation.navigate('Help')}
-            >
-              <MaterialCommunityIcons
-                name="help-circle-outline"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-              <Text style={[
-                styles.settingText,
-                { color: colors.text },
-                orientation === 'landscape' && { fontSize: 18 }
-              ]}>Yardım</Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.settingItem}
-              onPress={() => navigation.navigate('About')}
-            >
-              <MaterialCommunityIcons
-                name="information-outline"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-              <Text style={[
-                styles.settingText,
-                { color: colors.text },
-                orientation === 'landscape' && { fontSize: 18 }
-              ]}>Hakkında</Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={orientation === 'landscape' ? 28 : 24}
-                color={colors.subtext}
-              />
-            </TouchableOpacity>
+              { 
+                color: colors.text,
+                fontSize: getDynamicFontSize(16)
+              }
+            ]}>
+              Diğer
+            </Text>
+            {renderSettingItem('help-circle-outline', 'Yardım', () => navigation.navigate('Help'))}
+            {renderSettingItem('information-outline', 'Hakkında', () => navigation.navigate('About'))}
           </View>
         </View>
 
+        {/* Çıkış Butonu */}
         <TouchableOpacity
           style={[
             styles.logoutButton,
             orientation === 'landscape' && {
-              width: '50%',
+              width: isTablet() ? '40%' : '50%',
               alignSelf: 'center',
+              marginTop: getDynamicPadding(24)
             }
           ]}
           onPress={() => setShowLogoutModal(true)}
         >
           <MaterialCommunityIcons
             name="logout"
-            size={orientation === 'landscape' ? 28 : 24}
+            size={getIconSize()}
             color="#fff"
           />
           <Text style={[
             styles.logoutButtonText,
-            orientation === 'landscape' && { fontSize: 18 }
-          ]}>Çıkış Yap</Text>
+            { fontSize: getDynamicFontSize(16) }
+          ]}>
+            Çıkış Yap
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -366,7 +447,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   sectionTitle: {
-    fontSize: 16,
     fontWeight: '600',
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -374,15 +454,11 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   settingText: {
     flex: 1,
-    fontSize: 16,
-    marginLeft: 12,
   },
   logoutButton: {
     backgroundColor: '#f44336',
@@ -396,7 +472,6 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
   },
@@ -407,31 +482,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderRadius: 20,
-    padding: 24,
     alignItems: 'center',
-    width: '85%',
     maxWidth: 400,
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
   modalTitle: {
-    fontSize: 20,
     fontWeight: '600',
-    color: '#333',
     marginTop: 16,
     marginBottom: 8,
   },
   modalText: {
-    fontSize: 16,
-    color: '#666',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -442,7 +507,6 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
     marginHorizontal: 8,
@@ -457,35 +521,42 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: '#666',
-    fontSize: 16,
     fontWeight: '600',
   },
   logoutModalButtonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
   },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  landscapeModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: '100%',
+  },
   themeOptions: {
+    width: '100%',
+    marginTop: 24,
+  },
+  landscapeThemeOptions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
+    alignItems: 'center',
   },
   themeOption: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 10,
-    marginHorizontal: 8,
+    borderRadius: 12,
+    marginVertical: 8,
     borderWidth: 1,
   },
   themeOptionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontWeight: '500',
   },
   closeButton: {
     position: 'absolute',
@@ -500,4 +571,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SettingsScreen; 
+export default SettingsScreen;
