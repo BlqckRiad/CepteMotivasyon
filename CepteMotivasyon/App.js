@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Dimensions } from 'react-native';
 import { ThemeProvider, useTheme } from './lib/ThemeContext';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+import NotificationService from './lib/NotificationService';
 
 // Import screens
 import HomeScreen from './screens/HomeScreen';
@@ -229,6 +230,16 @@ const TabNavigator = () => {
 const MainStack = () => {
   const { user } = useAuth();
   const { colors } = useTheme();
+
+  useEffect(() => {
+    // Bildirim izinlerini iste ve bildirimleri ayarla
+    const setupNotifications = async () => {
+      await NotificationService.requestPermissions();
+      await NotificationService.scheduleDailyNotifications();
+    };
+
+    setupNotifications();
+  }, []);
 
   return (
     <Stack.Navigator

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -253,25 +253,52 @@ const ProfileScreen = ({ navigation }) => {
     });
   };
 
-  // useEffect yapısını güncelle
-  useEffect(() => {
-    const fetchAllData = async () => {
+  const fetchUserData = useCallback(async () => {
+    try {
       setIsLoading(true);
-      try {
-        await Promise.all([
-          fetchProfileData(),
-          updateStreakData(),
-          fetchUserBadges()
-        ]);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setIsLoading(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigation.navigate('Login');
+        return;
       }
-    };
 
-    fetchAllData();
-  }, []);
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Streak'i kontrol et ve güncelle
+      const newStreak = await StreakService.checkAndUpdateStreak(user.id);
+      console.log('Yeni streak değeri:', newStreak);
+
+      // Kullanıcı verilerini güncelle
+      setProfileData({
+        ...profile,
+        user_streak: newStreak
+      });
+
+      // Streak verilerini al
+      const streakData = await StreakService.calculateStreak(user.id);
+      setTaskStatus(streakData.statusData);
+
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      Alert.alert('Hata', 'Kullanıcı verileri alınamadı');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [navigation]);
+
+  // Sayfa her odaklandığında verileri güncelle
+  useFocusEffect(
+    useCallback(() => {
+      console.log('ProfileScreen odaklandı');
+      fetchUserData();
+    }, [fetchUserData])
+  );
 
   // Rozet verilerini çekme fonksiyonunu güncelle
   const fetchUserBadges = async () => {

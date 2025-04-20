@@ -219,12 +219,6 @@ const MarketScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.card }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Market
-        </Text>
-      </View>
-
       <View style={[styles.balanceContainer, { backgroundColor: colors.card }]}>
         <MaterialCommunityIcons
           name="star-circle"
@@ -260,7 +254,7 @@ const MarketScreen = () => {
           style={styles.suggestionIcon}
         />
         <Text style={[styles.suggestionText, { color: colors.text }]}>
-          Firma öneriniz mi var?
+          Ürün öneriniz mi var?
         </Text>
         <MaterialCommunityIcons
           name="chevron-right"

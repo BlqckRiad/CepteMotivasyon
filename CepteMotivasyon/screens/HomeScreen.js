@@ -7,6 +7,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { Audio } from 'expo-av';
+import * as Notifications from 'expo-notifications';
 
 const HomeScreen = () => {
   const [quote, setQuote] = useState({ text: '', author: '' });
@@ -37,6 +38,28 @@ const HomeScreen = () => {
     return () => {
       subscription?.remove();
     };
+  }, []);
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+    
+    // Second, call scheduleNotificationAsync()
+    Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Günaydın! 🌞',
+        body: 'Bugün görevlerini tamamlamayı unutma!',
+      },
+      trigger: {
+        seconds: 2, // 5 saniye sonra tetiklenecek
+        repeats: true, // sürekli tekrarlanacak
+      },
+    });
+    
   }, []);
 
   const fetchQuote = async () => {

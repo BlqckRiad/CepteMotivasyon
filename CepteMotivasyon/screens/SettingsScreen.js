@@ -12,12 +12,15 @@ import {
   ActivityIndicator,
   TouchableWithoutFeedback,
   Keyboard,
+  Switch,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
+import NotificationService from '../lib/NotificationService';
+import * as Notifications from 'expo-notifications';
 
 const SettingsScreen = () => {
   const { signOut } = useAuth();
@@ -25,6 +28,9 @@ const SettingsScreen = () => {
   const navigation = useNavigation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [orientation, setOrientation] = useState(
     Dimensions.get('window').width > Dimensions.get('window').height ? 'landscape' : 'portrait'
   );
@@ -50,6 +56,15 @@ const SettingsScreen = () => {
     return () => subscription?.remove();
   }, []);
 
+  useEffect(() => {
+    checkNotificationStatus();
+  }, []);
+
+  const checkNotificationStatus = async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    setNotificationsEnabled(status === 'granted');
+  };
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -69,6 +84,47 @@ const SettingsScreen = () => {
 
   const handlePasswordChange = () => {
     navigation.navigate('ChangePassword');
+  };
+
+  const handleNotificationToggle = async () => {
+    if (!notificationsEnabled) {
+      const { status } = await NotificationService.requestPermissions();
+      
+      if (status === 'granted') {
+        await NotificationService.scheduleDailyNotifications();
+        setNotificationsEnabled(true);
+      } else {
+        Alert.alert(
+          'Bildirim İzni Gerekli',
+          'Bildirimleri kullanabilmek için izin vermeniz gerekiyor.',
+          [{ text: 'Tamam' }]
+        );
+      }
+    } else {
+      await NotificationService.cancelAllNotifications();
+      setNotificationsEnabled(false);
+    }
+  };
+
+  const handlePermissionConfirm = async () => {
+    setShowPermissionModal(false);
+    const { status } = await NotificationService.requestPermissions();
+    
+    if (status === 'granted') {
+      await NotificationService.scheduleDailyNotifications();
+      setNotificationsEnabled(true);
+      Alert.alert(
+        'Bildirimler Açıldı',
+        'Günlük bildirimleriniz başarıyla ayarlandı.',
+        [{ text: 'Tamam' }]
+      );
+    } else {
+      Alert.alert(
+        'Bildirim İzni Gerekli',
+        'Bildirimleri kullanabilmek için izin vermeniz gerekiyor.',
+        [{ text: 'Tamam' }]
+      );
+    }
   };
 
   const renderSettingItem = (icon, text, onPress = () => {}) => (
@@ -238,66 +294,77 @@ const SettingsScreen = () => {
         <View style={[
           styles.modalContent,
           { 
-            backgroundColor: colors.card,
-            width: isTablet() ? '50%' : '85%',
-            padding: getDynamicPadding(24)
+            backgroundColor: '#fff',
+            width: '85%',
+            maxWidth: 400,
+            padding: 24
           }
         ]}>
-          <MaterialCommunityIcons 
-            name="logout-alert" 
-            size={getDynamicFontSize(48)} 
-            color="#f44336" 
-          />
+          <View style={styles.modalIconContainer}>
+            <MaterialCommunityIcons 
+              name="logout" 
+              size={48} 
+              color="#007AFF" 
+            />
+          </View>
+          
           <Text style={[
             styles.modalTitle,
             { 
-              color: colors.text,
-              fontSize: getDynamicFontSize(20)
+              color: '#000',
+              fontSize: 20,
+              fontWeight: '600',
+              textAlign: 'center',
+              marginTop: 16
             }
           ]}>
             Çıkış Yap
           </Text>
+          
           <Text style={[
             styles.modalText,
             { 
-              color: colors.subtext,
-              fontSize: getDynamicFontSize(16)
+              color: '#666',
+              fontSize: 16,
+              textAlign: 'center',
+              marginTop: 8,
+              marginBottom: 24
             }
           ]}>
-            Hesabınızdan çıkış yapmak istediğinize emin misiniz?
+            Uygulamadan çıkış yapmak istediğinize emin misiniz?
           </Text>
+          
           <View style={styles.modalButtons}>
             <TouchableOpacity
               style={[
                 styles.modalButton,
                 styles.cancelButton,
-                { padding: getDynamicPadding(12) }
+                { 
+                  backgroundColor: '#f5f5f5',
+                  borderColor: '#ddd'
+                }
               ]}
               onPress={() => setShowLogoutModal(false)}
             >
               <Text style={[
-                styles.cancelButtonText,
-                { fontSize: getDynamicFontSize(16) }
+                styles.modalButtonText,
+                { color: '#333' }
               ]}>
-                Vazgeç
+                İptal
               </Text>
             </TouchableOpacity>
+            
             <TouchableOpacity
               style={[
                 styles.modalButton,
-                styles.logoutModalButton,
-                { padding: getDynamicPadding(12) }
+                styles.confirmButton,
+                { backgroundColor: '#007AFF' }
               ]}
               onPress={handleLogout}
             >
-              <MaterialCommunityIcons 
-                name="logout" 
-                size={getIconSize()} 
-                color="#fff" 
-              />
               <Text style={[
-                styles.logoutModalButtonText,
-                { fontSize: getDynamicFontSize(16) }
+                styles.modalButtonText,
+                { color: '#fff' }
               ]}>
                 Çıkış Yap
               </Text>
@@ -305,6 +372,119 @@ const SettingsScreen = () => {
           </View>
         </View>
       </View>
+    </Modal>
+  );
+
+  const NotificationSettingsModal = () => (
+    <Modal
+      visible={showNotificationModal}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setShowNotificationModal(false)}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowNotificationModal(false)}
+      >
+        <View style={[styles.modalContent, { 
+          backgroundColor: colors.card,
+          width: isTablet() ? '40%' : '80%',
+          maxWidth: 320,
+          maxHeight: '70%',
+        }]}>
+          <View style={styles.modalHeader}>
+            <View style={[styles.iconCircle, { backgroundColor: colors.primary + '15' }]}>
+              <MaterialCommunityIcons
+                name="bell-ring"
+                size={28}
+                color={colors.primary}
+              />
+            </View>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Bildirim Ayarları
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.subtext }]}>
+              Günlük motivasyon bildirimlerini yönetin
+            </Text>
+          </View>
+
+          <View style={[styles.notificationCard, { backgroundColor: colors.background }]}>
+            <View style={styles.notificationSetting}>
+              <View style={styles.notificationSettingInfo}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <MaterialCommunityIcons
+                    name="bell"
+                    size={20}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <Text style={[styles.settingTitle, { color: colors.text }]}>
+                    Günlük Bildirimler
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: colors.subtext }]}>
+                    Motivasyon ve görev hatırlatmaları
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={handleNotificationToggle}
+                trackColor={{ false: colors.border, true: colors.primary + '80' }}
+                thumbColor={notificationsEnabled ? colors.primary : colors.border}
+              />
+            </View>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            <View style={styles.notificationTimes}>
+              <View style={styles.notificationTime}>
+                <View style={[styles.timeIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <MaterialCommunityIcons
+                    name="weather-sunny"
+                    size={16}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.timeTextContainer}>
+                  <Text style={[styles.timeLabel, { color: colors.text }]}>
+                    Sabah Bildirimi
+                  </Text>
+                  <Text style={[styles.timeValue, { color: colors.primary }]}>
+                    09:00
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.notificationTime}>
+                <View style={[styles.timeIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                  <MaterialCommunityIcons
+                    name="weather-night"
+                    size={16}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.timeTextContainer}>
+                  <Text style={[styles.timeLabel, { color: colors.text }]}>
+                    Akşam Bildirimi
+                  </Text>
+                  <Text style={[styles.timeValue, { color: colors.primary }]}>
+                    16:00
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.modalButton, { backgroundColor: colors.primary }]}
+            onPress={() => setShowNotificationModal(false)}
+          >
+            <Text style={styles.modalButtonText}>Tamam</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
     </Modal>
   );
 
@@ -344,7 +524,7 @@ const SettingsScreen = () => {
             ]}>
               Uygulama Ayarları
             </Text>
-            {renderSettingItem('bell-outline', 'Bildirim Ayarları')}
+            {renderSettingItem('bell-outline', 'Bildirim Ayarları', () => setShowNotificationModal(true))}
             {renderSettingItem('theme-light-dark', 'Tema Ayarları', () => setShowThemeModal(true))}
           </View>
         </View>
@@ -428,6 +608,7 @@ const SettingsScreen = () => {
 
       <ThemeModal />
       <LogoutModal />
+      <NotificationSettingsModal />
     </ScrollView>
   );
 };
@@ -484,16 +665,38 @@ const styles = StyleSheet.create({
   modalContent: {
     borderRadius: 20,
     alignItems: 'center',
-    maxWidth: 400,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
+  closeButton: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+    width: '100%',
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   modalTitle: {
     fontWeight: '600',
-    marginTop: 16,
     marginBottom: 8,
   },
   modalText: {
@@ -504,33 +707,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+    gap: 12
   },
   modalButton: {
     flex: 1,
+    paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
-    marginHorizontal: 8,
-    flexDirection: 'row',
     justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
   },
-  logoutModalButton: {
-    backgroundColor: '#f44336',
+  confirmButton: {
+    backgroundColor: '#007AFF',
   },
-  cancelButtonText: {
-    color: '#666',
+  modalButtonText: {
+    fontSize: 16,
     fontWeight: '600',
   },
-  logoutModalButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  modalHeader: {
+  modalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
   },
   landscapeModalHeader: {
     flexDirection: 'row',
@@ -558,16 +760,22 @@ const styles = StyleSheet.create({
   themeOptionText: {
     fontWeight: '500',
   },
-  closeButton: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  bulletPoints: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  bulletPoint: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
+    marginBottom: 12,
+  },
+  bulletIcon: {
+    marginRight: 12,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 
