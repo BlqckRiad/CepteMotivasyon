@@ -1,5 +1,0 @@
-INSERT INTO "public"."user_tasks" ("user_id", "task1_id", "task2_id", "task3_id", "task4_id", "task5_id", "task1_completed", "task2_completed", "task3_completed", "task4_completed", "task5_completed", "created_date", "created_at") VALUES 
-('4c846cb1-1ec9-43be-943f-2fddd494eefb', '85', '142', '156', '123', '167', 'true', 'true', 'true', 'true', 'true', '2024-03-13', '2024-03-13 09:15:23.105861+00'),
-('4c846cb1-1ec9-43be-943f-2fddd494eefb', '92', '134', '178', '145', '112', 'true', 'true', 'true', 'true', 'true', '2024-03-14', '2024-03-14 10:45:33.739248+00'),
-('4c846cb1-1ec9-43be-943f-2fddd494eefb', '73', '159', '128', '96', '143', 'true', 'true', 'true', 'true', 'true', '2024-03-15', '2024-03-15 14:20:18.818649+00'),
-('4c846cb1-1ec9-43be-943f-2fddd494eefb', '124', '87', '165', '93', '138', 'true', 'true', 'true', 'true', 'true', '2024-03-16', '2024-03-16 11:30:44.277497+00'); 

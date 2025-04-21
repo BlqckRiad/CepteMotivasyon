@@ -15,6 +15,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 
 const getTabletDimensions = () => {
   const windowDimensions = Dimensions.get('window');
@@ -27,6 +28,7 @@ const getTabletDimensions = () => {
 
 const AuthScreen = () => {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -122,6 +124,10 @@ const AuthScreen = () => {
     }
   };
 
+  const handleContinue = () => {
+    navigation.navigate('Main');
+  };
+
   const renderInput = (placeholder, value, onChangeText, options = {}) => (
     <View style={styles.inputContainer}>
       <MaterialCommunityIcons
@@ -131,11 +137,15 @@ const AuthScreen = () => {
         style={styles.inputIcon}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { 
+          backgroundColor: colors.card,
+          color: colors.text,
+          borderColor: colors.border 
+        }]}
         placeholder={placeholder}
+        placeholderTextColor={colors.subtext}
         value={value}
         onChangeText={onChangeText}
-        placeholderTextColor="#999"
         autoCapitalize="none"
         secureTextEntry={options.secure}
         keyboardType={options.keyboardType || 'default'}
@@ -259,6 +269,21 @@ const AuthScreen = () => {
                   </Text>
                 </>
               )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.continueButton]}
+              onPress={handleContinue}
+            >
+              <MaterialCommunityIcons
+                name="arrow-right"
+                size={24}
+                color="#4CAF50"
+                style={styles.buttonIcon}
+              />
+              <Text style={[styles.buttonText, { color: '#4CAF50' }]}>
+                Devam Et
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -448,6 +473,20 @@ const baseStyles = StyleSheet.create({
   successTextTablet: {
     fontSize: 16,
     lineHeight: 24,
+  },
+  continueButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    marginTop: 12,
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  footerText: {
+    color: '#4CAF50',
+    fontSize: 14,
   },
 });
 

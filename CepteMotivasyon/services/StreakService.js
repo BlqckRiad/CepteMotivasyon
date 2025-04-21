@@ -3,7 +3,7 @@ import badgeHelper from '../lib/badgeHelper';
 
 class StreakService {
   async calculateStreak(userId) {
-    console.log('calculateStreak çağrıldı');
+ 
     try {
       // Son 30 günü al (daha uzun bir geçmişe bakarak streak'i doğru hesaplayalım)
       const endDate = new Date();
@@ -130,7 +130,7 @@ class StreakService {
   }
 
   async checkAndUpdateStreak(userId) {
-    console.log('checkAndUpdateStreak çağrıldı');
+    
     try {
       // Kullanıcının mevcut streak'ini al
       const { data: profile, error: profileError } = await supabase

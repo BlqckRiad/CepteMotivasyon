@@ -21,6 +21,8 @@ import ChangePasswordScreen from './screens/ChangePasswordScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import BadgesScreen from './screens/BadgesScreen';
 import MarketScreen from './screens/MarketScreen';
+import EducationScreen from './screens/EducationScreen';
+import FAQScreen from './screens/FAQScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -162,22 +164,17 @@ const TabNavigator = () => {
             case 'Settings':
               title = 'Ayarlar';
               break;
+            case 'Education':
+              title = 'Eğitim';
+              break;
           }
           return <CustomHeader title={title} />;
         },
         tabBarStyle: getTabBarStyle(),
         tabBarShowLabel: false,
       }}
+      initialRouteName="Home"
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={({ navigation }) => ({
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} icon="home" label="Ana Sayfa" onPress={() => navigation.navigate('Home')} />
-          ),
-        })}
-      />
       <Tab.Screen
         name="Profile"
         component={user ? ProfileScreen : AuthRequiredScreen}
@@ -194,16 +191,29 @@ const TabNavigator = () => {
         })}
       />
       <Tab.Screen
-        name="Settings"
-        component={user ? SettingsScreen : AuthRequiredScreen}
+        name="Education"
+        component={EducationScreen}
         options={({ navigation }) => ({
           tabBarIcon: ({ focused }) => (
             <TabBarIcon 
               focused={focused} 
-              icon="cog" 
-              label="Ayarlar" 
-              onPress={() => user ? navigation.navigate('Settings') : navigation.navigate('Auth')}
-              disabled={!user}
+              icon="school" 
+              label="Eğitim" 
+              onPress={() => navigation.navigate('Education')} 
+            />
+          ),
+        })}
+      />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={({ navigation }) => ({
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon 
+              focused={focused} 
+              icon="home" 
+              label="Ana Sayfa" 
+              onPress={() => navigation.navigate('Home')} 
             />
           ),
         })}
@@ -218,6 +228,21 @@ const TabNavigator = () => {
               icon="store" 
               label="Market" 
               onPress={() => user ? navigation.navigate('Market') : navigation.navigate('Auth')}
+              disabled={!user}
+            />
+          ),
+        })}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={user ? SettingsScreen : AuthRequiredScreen}
+        options={({ navigation }) => ({
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon 
+              focused={focused} 
+              icon="cog" 
+              label="Ayarlar" 
+              onPress={() => user ? navigation.navigate('Settings') : navigation.navigate('Auth')}
               disabled={!user}
             />
           ),
@@ -264,6 +289,7 @@ const MainStack = () => {
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="Help" component={HelpScreen} />
+          <Stack.Screen name="FAQ" component={FAQScreen} />
           <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
           <Stack.Screen
             name="Market"

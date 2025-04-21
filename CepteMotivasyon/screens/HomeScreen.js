@@ -326,8 +326,10 @@ const HomeScreen = () => {
     setLoading(true);
     try {
       await fetchQuote();
-      const todayTasksData = await checkTodayTasks();
-      setTodayTasks(todayTasksData);
+      if (user) {
+        const todayTasksData = await checkTodayTasks();
+        setTodayTasks(todayTasksData);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -490,16 +492,35 @@ const HomeScreen = () => {
     </TouchableOpacity>
   );
 
-  const renderTasksCard = () => (
-    <View style={[styles.tasksCard, orientation === 'landscape' && styles.tasksCardLandscape]}>
-      {renderTasksHeader()}
-      {tasks.map((task) => (
-        <View key={task.id} style={styles.taskItemWrapper}>
-          {renderTaskItem({ item: task })}
+  const renderTasksCard = () => {
+    if (!user) {
+      return (
+        <View style={[styles.tasksCard, orientation === 'landscape' && styles.tasksCardLandscape]}>
+          <View style={styles.loginMessageContainer}>
+            <MaterialCommunityIcons name="account-lock" size={orientation === 'landscape' ? 60 : 48} color="#666" />
+            <Text style={styles.loginMessageTitle}>Görevlerinizi görmek için giriş yapın</Text>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Auth')}
+            >
+              <Text style={styles.loginButtonText}>Giriş Yap</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      ))}
-    </View>
-  );
+      );
+    }
+
+    return (
+      <View style={[styles.tasksCard, orientation === 'landscape' && styles.tasksCardLandscape]}>
+        {renderTasksHeader()}
+        {tasks.map((task) => (
+          <View key={task.id} style={styles.taskItemWrapper}>
+            {renderTaskItem({ item: task })}
+          </View>
+        ))}
+      </View>
+    );
+  };
 
   return (
     <>
@@ -707,21 +728,24 @@ const styles = StyleSheet.create({
     marginHorizontal: '5%',
   },
   loginMessageContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 30,
+    padding: 20,
   },
   loginMessageTitle: {
     fontSize: 18,
-    color: '#333',
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 16,
+    marginBottom: 24,
     textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 30,
   },
   loginButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 30,
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 8,
   },
   loginButtonText: {
     color: '#fff',

@@ -272,8 +272,7 @@ const ProfileScreen = ({ navigation }) => {
 
       // Streak'i kontrol et ve güncelle
       const newStreak = await StreakService.checkAndUpdateStreak(user.id);
-      console.log('Yeni streak değeri:', newStreak);
-
+     
       // Kullanıcı verilerini güncelle
       setProfileData({
         ...profile,
@@ -295,7 +294,7 @@ const ProfileScreen = ({ navigation }) => {
   // Sayfa her odaklandığında verileri güncelle
   useFocusEffect(
     useCallback(() => {
-      console.log('ProfileScreen odaklandı');
+    
       fetchUserData();
     }, [fetchUserData])
   );

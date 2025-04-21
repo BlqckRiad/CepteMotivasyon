@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CepteMotivasyon",
+    "name": "Cepte Motivasyon",
     "slug": "CepteMotivasyon",
     "version": "1.0.0",
     "orientation": "default",
@@ -13,7 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ceptemotivasyon.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +25,17 @@
         "backgroundColor": "#ffffff"
       },
       "useNextNotificationsApi": true,
-  "permissions": ["NOTIFICATIONS"]
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1e22e7f9-ef16-418f-afb1-c92b238cc8b0"
+      }
     }
   }
 }
